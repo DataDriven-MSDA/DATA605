@@ -1,0 +1,273 @@
+---
+title: "605_HW6.Rmd"
+author: "Kumudini Bhave"
+date: "March 20, 2017"
+output:
+  pdf_document: default
+  html_document:
+    fontsize: 35pt
+    highlight: pygments
+    theme: cerulean
+---
+
+********
+
+
+# **Random Variables & Probability   **
+
+********
+
+### Problem Set 1 : 
+
+### (1) When you roll a fair die 3 times, how many possible outcomes are there?
+
+### Solution :
+A die rolled has 6 possible outcomes . Hence the rolling of die 3 times gives
+6 * 6 * 6 = 216 outcomes
+
+*********
+
+### (2) What is the probability of getting a sum total of 3 when you roll a die two times?
+
+### Solution :
+
+A die rolled two times has 36 possible outcomes.
+ 
+A sum total of 3 can be obtained with 2outcomes frmo the 36 possible outcomes .
+Hence 
+P(sum=3) = P(1,2) + P(2,1) (Probability that first die rolls to 1 and second die rolls to 2 PLUS Probability that first die rolls to 2 and second die rolls to 1)
+
+Since each die roll is an independant event, the above equals to
+
+= P(1) * P(2) 
++ P(2) * P(1)
+
+= 1/6 * 1/6
++ 1/6 * 1/6
+
+1/36 + 1/36 = 1/18
+
+*********
+
+
+### (3) Assume a room of 25 strangers. What is the probability that two of them have the same birthday? Assume that all birthdays are equally likely and equal to 1/365 each. What happens to this probability when there are 50 people in the room?
+
+### Solution :
+
+Total stangers = 25
+Total days =  365
+
+P(X1) = 365/365  i.e. 1 , as it can be any day of the year
+P(X2) for second person to have a different birthday is = 364/365
+And similarly P(X3) would be 363 / 365
+So for nth person (365 - (n-1))/365
+
+hence for 25th person P(X25) = 341/365
+
+P(Y= that it is a shared birthday) = 1- probabilities that is is not a shared birthday
+= 1 - P(x1).P(X2).P(X3)...P(X24)
+= 1 - 365/ 365 * 364/365 * 363 /365 ....341/365
+
+
+= $$1\quad -\frac { 365\times 364\times 363\times 362\times 361\times ....341 }{ { 365 }^{ 25 } } $$
+
+=$$1\quad -\frac { 365! }{ 340!{ { 365 }^{ 25 } } }  $$
+
+= $$1\quad -\frac {365! }{ (365-n)!{ { 365 }^{ n } } } $$
+
+
+P(Y same birthday when n=50)
+
+
+= $$1\quad -\frac {365! }{ (365-50)!{ { 365 }^{ 50 } } } $$
+
+```{r eval=TRUE}
+
+
+sharedbday <- function(num) {
+  diffbday <- factorial(365) / (factorial (365 - num) * (365^num))
+    1 - diffbday
+  
+}
+
+
+Pshared_25 = sharedbday(25)
+
+Pshared_50 = sharedbday(50)
+
+
+
+```
+```{r eval=TRUE}
+
+
+sharedbdaynew <- function(num) {
+  diffbday <- prod(365:(365-(num-1))) / (365^num)
+    1 - diffbday
+  
+}
+
+
+Pshared_25 <- sharedbdaynew(25)
+Pshared_25
+Pshared_50 = sharedbdaynew(50)
+Pshared_50
+
+
+```
+It is apparent that with 50 people in room, the chance of any two having the same birthday is highly likely.
+
+
+
+*********
+
+### Problem Set 2 : Write a program to take a document in English and print out the estimated probabilities for each of the words that occur in that document. Your program should take in a file containing a large document and write out the probabilities of each of the words that appear in that document. Please remove all punctuation (quotes, commas, hyphens etc) and convert the words to lower case before you perform your calculations. Extend your program to calculate the probability of two words occurring adjacent to each other. It should take in a document, and two words (say the and for) and compute the probability of each of the words occurring in the document and the joint probability of both of them occurring together. The order of the two words is not important.
+
+### Solution :
+
+```{r warning=FALSE, comment=FALSE, message=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+knitr::opts_chunk$set(message = FALSE, echo=TRUE)
+
+
+
+# Library for string manipulation/regex operations
+library(stringr)
+# Library for data display in tabular format
+library(DT)
+# Library to read text file
+library(RCurl)
+#Library for text mining
+library("tm")
+# Library for transformations
+library("dplyr")
+
+# Data Cleansing Function
+
+cleanupDataCorpus <- function(dataCorpus){
+     
+     cleanDataCorpus <- tm_map(dataCorpus, removePunctuation)
+     cleanDataCorpus <- tm_map(cleanDataCorpus, removeNumbers)
+     
+     cleanDataCorpus <- tm_map(cleanDataCorpus, str_replace_all, pattern
+                              = "[[:punct:]]", replacement = " ")     
+     cleanDataCorpus <- tm_map(cleanDataCorpus, tolower)
+     cleanDataCorpus <- tm_map(cleanDataCorpus, removeWords, c('said','u.s',stopwords("english")))
+     
+     
+     cleanDataCorpus <- tm_map(cleanDataCorpus, stemDocument)
+     cleanDataCorpus<- tm_map(cleanDataCorpus, PlainTextDocument)
+     return(cleanDataCorpus)
+     
+}
+
+
+# Function to find the terms in specified file
+
+findFileTerms <- function(dataCorpus){
+
+     fileCorpus <- Corpus(VectorSource(dataCorpus))
+     
+     # Call function to clean the punctuation, whitespace, general english words like the        and etc
+     cleanfileCorpus <- cleanupDataCorpus(fileCorpus)
+
+     # Form document term matrix
+     file.tdm <- DocumentTermMatrix(cleanfileCorpus)
+     
+     # Since we have only one document and we want to enlist the terms in that , we take a       transpose.
+     file.datamatx <- t(data.matrix(file.tdm))
+     
+     #freq <- colSums(as.matrix(file.datamatx)  )
+     termfreq <- rowSums(file.datamatx)
+     
+     # To extract in tabular format
+     filedf <- data.frame(Term =names(termfreq), Count = termfreq)
+     #head(filedf)
+     
+     
+     filedata.df <- data.frame(Term = filedf$Term, Count = filedf$Count)
+     
+     #filedata.df <- filedata.df %>% mutate(Probability = termfreq / freq)
+     filedata.df <- filedata.df %>% mutate(Probability = termfreq / sum(termfreq))
+     
+     #head(filedata.df)     
+     filedata.df
+}
+# End of function findFileTerms()
+
+
+
+# function to find the combination of two terms in the document
+findComboTerms <- function(dataCorpus, t1, t2){
+
+     
+     fileCorpus <- Corpus(VectorSource(dataCorpus))
+     
+     # Call function to clean the punctuation, whitespace, general english words like the        and etc
+     cleanfileCorpus <- cleanupDataCorpus(fileCorpus)
+
+     # Form document term matrix
+     file.tdm <- DocumentTermMatrix(cleanfileCorpus)
+     file.datamatx <- t(data.matrix(file.tdm))
+     
+     # Calculating the total terms in the file data 
+     freq <- colSums(as.matrix(file.datamatx)  )
+     #freq
+     
+     # Finding term/probability table through function call
+     filetermstable <- findFileTerms(file.gitdata)
+     
+     
+     # Calculating the probability of each individual term of the combo     
+     tp1 <- filetermstable[filetermstable$Term == t1, 3]
+     tc1 <- filetermstable[filetermstable$Term == t1, 2]
+     
+     tp2 <- filetermstable[filetermstable$Term == t2, 3]
+     tc2 <- filetermstable[filetermstable$Term == t2, 2]
+     
+
+     # Calculating the count of the combo term
+     combotermtot <- str_count(file.gitdata, paste0(t1," ", t2)) + str_count(file.gitdata, paste(t2," ", t1))
+     
+     # calculate the probability of the combo term in the file data   
+    combotermprob <- combotermtot / freq
+     
+     # Combining into data frame the individual terms , combo terms and probabilities
+    
+     combodf <- data.frame(Term = c(t1, t2, paste0(paste0(t1," ", t2), "/", paste0(t2," ", t1))),  Count=c(tc1,tc2,combotermtot)   ,                  Probability = c(tp1, tp2, combotermprob), stringsAsFactors = FALSE)
+     # return data frame as the function value
+     combodf
+
+}
+# End of function findComboTerms()
+
+
+
+
+# GitHub Location of tournament data file
+
+file.giturl <- "https://raw.githubusercontent.com/DataDriven-MSDA/DATA605/master/assign6.sample.txt"
+file.gitdata <- getURL(file.giturl)
+
+# Find the terms and their probabilities inthe file data
+filetermstable <- findFileTerms(file.gitdata)
+datatable(filetermstable)
+
+# find the probability of the combo term 
+combotermdf <- findComboTerms(file.gitdata, "federal", "government")
+combotermdf
+
+# find the probability of the combo term 
+combotermdf <- findComboTerms(file.gitdata, "health", "services")
+combotermdf
+
+# find the probability of the combo term 
+combotermdf <- findComboTerms(file.gitdata, "tutwiler", "prison")
+combotermdf
+
+
+```
+
+
+
+**********
+
