@@ -1,0 +1,239 @@
+---
+title: "605_HW10.Rmd"
+author: "Kumudini Bhave"
+date: "April 15, 2017"
+output:
+  html_document:
+    fontsize: 35pt
+    highlight: pygments
+    theme: cerulean
+  pdf_document: default
+---
+
+
+
+
+# **PAGE RANK    **
+
+
+
+
+### Problem Set 1 : 
+
+From a 6 page universe,  we compute the page rank for each of the web pages. The nodes represent the websites, and the links outgoing from each of these nodes are as follows
+
+
+Webpage Node | Outgoing Link To
+------------ | --------------------
+Node 1 | Node 2
+Node 1 | Node 3
+Node 2 | NA
+Node 3 | Node 1
+Node 3 | Node 2 
+Node 3 | Node 5
+Node 4 | Node 5
+Node 4 | Node 6
+Node 5 | Node 4
+Node 5 | Node 6
+Node 6 | Node 4
+
+
+
+### Form the A matrix. Then, introduce decay and form the B matrix as we did in the course notes
+
+### Solution :
+Based on the above table of website node outgoing links, we derive the matrix that represent the nodes with their links
+
+
+$$A\quad =\quad \left[ \begin{matrix} 0 & 1/2 & 1/2 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 1/3 & 1/3 & 0 & 0 & 1/3 & 0 \\ 0 & 0 & 0 & 0 & 1/2 & 1/2 \\ 0 & 0 & 0 & 1/2 & 0 & 1/2 \\ 0 & 0 & 0 & 1 & 0 & 0 \end{matrix} \right] $$
+
+We observe that Node 2 deos not have any outgoing links.
+hence it is the dangling node.
+Hence there is an equal probability that a use on Node 2 may jump to an other node.
+This probability is equally likely i.e. 1/6
+Hence to make it row stochastic, we alter the row 2 by replacing it with the equal probabilities ( These sum to 1)
+
+
+
+$$A\quad =\quad \left[ \begin{matrix} 0 & 1/2 & 1/2 & 0 & 0 & 0 \\ 1/6 & 1/6 & 1/6 & 1/6 & 1/6 & 1/6 \\ 1/3 & 1/3 & 0 & 0 & 1/3 & 0 \\ 0 & 0 & 0 & 0 & 1/2 & 1/2 \\ 0 & 0 & 0 & 1/2 & 0 & 1/2 \\ 0 & 0 & 0 & 1 & 0 & 0 \end{matrix} \right] $$
+
+
+
+The decayed matrix B can be defined as 
+
+$$B\quad =\quad 0.85\quad \times \quad A\quad +\quad (0.15\quad /\quad n)$$
+
+
+
+where n is the number of nodes
+
+```{r eval=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+knitr::opts_chunk$set(message = FALSE, echo=TRUE)
+
+library(DT)
+
+
+
+
+matrixA <- matrix(c(0, 1/2, 1/2, 0, 0, 0, 1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 1/3, 1/3, 0, 0, 1/3, 0, 0, 0, 0, 0, 1/2, 1/2, 0, 0, 0, 1/2, 0, 1/2, 0, 0, 0, 1, 0, 0), nrow=6, byrow=T)
+
+# The decay being defined as 0/.85
+
+decay <- 0.85
+
+matrixB <- decay * matrixA + (0.15 / 6)
+
+matrixB
+
+```
+
+
+**********
+
+
+### 2 Start with a uniform rank vector r and perform power iterations on B till convergence. That is, compute the solution r = Bn * r. Attempt this for a sufficiently large n so that r actually converges.                               
+### Solution :
+
+An 1 by n vector r which represents the PageRank of all the n webpage nodes.
+
+$${ r }_{ i }\quad =\quad \left[ \begin{matrix} 1/6 & 1/6 & 1/6 & 1/6 & 1/6 & 1/6 \end{matrix} \right] $$
+We iteratively perform A * r  such that ,  the page rank converges for all nodes,  at which point 
+$$r\quad =\quad B\quad \times \quad r$$
+
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+knitr::opts_chunk$set(message = FALSE, echo=TRUE)
+
+# function converge()
+#@param1 probability matrix 
+#@param2 initial page rank vector
+
+converge <- function(mat, rvec)
+{
+     converged = FALSE
+     iter <- 0
+
+     mat <- matrixB
+     rvec <- rinit
+
+     # loop through till the pagerank vector stabilizes     
+     while(converged == FALSE)
+     {
+          iter <- iter + 1
+          newrvec <- crossprod(mat, rvec)
+
+          if (identical(newrvec, rvec)) 
+          {
+               converged <- TRUE
+          }
+          else{
+               rvec <- newrvec 
+               converged <- FALSE
+          }
+          
+     }
+     
+     # return the pagerank vector and the no of iterations it took to converge
+     return( list(newrvec, iter))
+}
+
+rinit <- matrix(c( 1/6, 1/6, 1/6, 1/6, 1/6, 1/6), nrow=6, byrow=T)
+
+r <- converge(matrixB, rinit)
+
+# Converged Vector
+r[[1]]
+
+# No of iterations to converge
+r[[2]]
+
+
+ 
+```
+
+
+
+********
+
+
+
+### 3. Compute the eigen-decomposition of B and verify that you indeed get an eigenvalue of 1 as the largest eigenvalue and that its corresponding eigenvector is the same vector that you obtained in the previous power iteration method. Further, this eigenvector has all positive entries and it sums to 1.
+
+                      
+### Solution :
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+knitr::opts_chunk$set(message = FALSE, echo=TRUE)
+
+# Finding Eigen Values for decayed matrix B
+eigen((matrixB))$values
+
+# Verifying if max value is 1
+which.max(eigen((matrixB))$values)
+
+
+# Finding Eigen Vectors for decayed matrix B
+eigen(t(matrixB))$vectors
+
+# Taking the corresponding vector for largest eigen value
+# Considering only the real values
+evec <-Re(eigen(t(matrixB))$vectors[,1])
+
+# Diving by the sum of the vector
+evec <- matrix(evec/sum(evec))
+ 
+# Comparing it to the output from the function converge()
+identical(round(evec,8), round(r[[1]],8))
+
+```
+
+We find that the converge() returns the same pagerank matrix as the eigenvector corresponding to the highest eigenvalue of the decayed matrix B
+
+********
+
+
+### 4. Use the graph package in R and its page.rank method to compute the Page Rank of the graph as given in A. Note that you don't need to apply decay. The package starts with a connected graph and applies decay internally. Verify that you do get the same PageRank vector as the two approaches above.
+
+                      
+### Solution :
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+knitr::opts_chunk$set(message = FALSE, echo=TRUE)
+# loading the igraph package to plot the directed graph of nodes 
+ library(igraph)
+
+g <- graph.adjacency(matrixA, 'directed', weighted=TRUE)
+
+
+plot(g)
+
+
+
+```
+
+
+
+```{r eval=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+knitr::opts_chunk$set(message = FALSE, echo=TRUE)
+
+ #Verifying if the page rank matrix obtained through this matches the one through converge()
+
+pgrankmat <- matrix(page.rank(g)$vector)
+
+identical(round(pgrankmat,8), round(evec,8))
+
+
+
+```
+
+We observe that igraph package internally handles decay using a damping factor of 0.85 and automatically assigns a uniform random probability to dangling nodes, and derives the pagerank matrix which is identical to the one derived from function converge() and the eigenvector of th decayed matrix
+
+********
+
+
+
+
+
