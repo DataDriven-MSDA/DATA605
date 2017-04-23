@@ -138,8 +138,11 @@ converge <- function(mat, rvec)
      return( list(newrvec, iter))
 }
 
+
+# Start with considering equal page rank for each of the nodes
 rinit <- matrix(c( 1/6, 1/6, 1/6, 1/6, 1/6, 1/6), nrow=6, byrow=T)
 
+# Testing function converge()
 r <- converge(matrixB, rinit)
 
 # Converged Vector
