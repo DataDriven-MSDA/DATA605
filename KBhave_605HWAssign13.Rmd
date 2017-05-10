@@ -1,0 +1,332 @@
+---
+title: "605_HW13.Rmd"
+author: "Kumudini Bhave"
+date: "May 5, 2017"
+output:
+  pdf_document: default
+  html_document:
+    fontsize: 35pt
+    highlight: pygments
+    theme: cerulean
+---
+
+
+# **NUMERICAL INTEGRATION AND DIFFERENTIATION **
+
+
+
+
+### Problem Set 1 : 
+
+### Write a program to compute the derivative of $f(x) = x^3 + 2x^2$ at any value of x. Your function should take in a value of x and return back an approximation to the derivative of f(x) evaluated at that value. You should not use the analytical form of the derivative to compute it. Instead, you should compute this approximation using limits.
+
+
+
+### Solution :
+
+The derivative of a function can be computed in terms of limits as follows
+$$f'(x)\quad =\quad { limit }_{ h\rightarrow \infty  }\frac { f(x\quad +\quad h)\quad -\quad f(x) }{ h }$$ 
+
+The function $f(x) = x^3 + 2x^2$ can be created as
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+fx1 <- function(x){
+     
+     
+     return (x^3 + 2 *(x^2))
+     
+}
+
+
+
+```
+
+To compute derivative, we define the function that complies wiht the above formula 
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+# Function to calculate derivative of any function using limit formula
+#@param1 fxunc function of x
+#@param2 x
+#@param3 h
+fxderiv <- function(fxfunc, x, h){
+     
+     
+     fxh <- fxfunc(x + h)
+     fx <- fxfunc(x)
+     return ((fxh - fx) / h)
+     
+}
+
+```
+
+
+Testing the function $f(x) = x^3 + 2x^2$ for infinitesimal value h = 0.000000001 and different values of x
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+h <- 0.000000001
+x <- 2
+
+derivfx1 <- fxderiv (fx1, x,h)
+
+     
+
+```
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+h <- 0.000000001
+x <- 3
+
+derivfx1 <- fxderiv (fx1, x,h)
+
+     
+
+```
+
+Analytically the function $f(x) = x^3 + 2x^2$ has a derivative
+$f'(x)  = 3x^2 + 2(2x)$
+
+= $3 * x^2 + 4 * x$
+
+
+Substituting the values x = 2 and x = 3
+we get 
+$f'(x)$ for $x=2$ as 20
+$f'(x)$ for $x=3$ as 39
+
+which is same as the derivative computed through limits function
+
+
+********
+
+
+### Problem Set 2. Now, write a program to compute the area under the curve for the function $3x^2+4x$ in the range x = [1; 3]. You should first split the range into many small intervals using some really small delta x value (say 1e-6) and then compute the approximation to the area under the curve. 
+
+
+### Solution :
+
+
+$f(x) = 3x^2 + 4x$ can be calculated as
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+fx <- function(x){
+     
+     
+     return (3 * x^2 + 4 *x)
+     
+}
+
+
+
+```
+
+Let small infinitesimal increment in $x$ i.e. $\delta$ $x$ 
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+delx <- 0.000001
+
+```
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+# Function to calculate the area under the curve defined by the function
+#@param1 function for which the area is to be calculated
+#@param2 delta x value`
+
+areacurve <- function(fx, deltax)
+{
+     # the area under curve for the function can be calculated as the height * width 
+     # we calculate this for infinitesimal increment of x value starting from lower lim to higher limit of range i.e 1 to 3
+     
+     #Hence height = fx(x) for every value of x
+     # and width = delta x
+     
+     limit <- seq(1,3, by=deltax)
+     area <- 0
+     for(i in limit)
+          {
+          
+               height <- fx(i)
+               width <- deltax
+               
+               deltaarea <- height * width
+     
+               area <- area + deltaarea
+     
+          }
+return( area)
+}
+    
+```
+
+
+Testing the function $f(x) = x^3 + 2x^2$ for infinitesimal value h = 0.000000001 and different values of x
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+# passing the function $f(x) = x^3 + 2x^2 for delta x value of 0.000001
+areacurve(fx,delx) 
+
+```
+
+Verifying the area under curve with the built in  R function
+
+
+
+```{r eval=TRUE,  tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+# passing the function $f(x) = x^3 + 2x^2 for delta x value of 0.000001
+integrate(fx,1, 3) 
+
+```
+
+We observe that the R built in function integral value for the function for x values 1 to 3, is same as the one obtained from the areacurve() function
+
+
+
+*********
+
+
+
+### Please solve these problems analytically (i.e. by working out the math) and submit your answers.
+
+
+### Problem Set 3. Use integration by parts to solve for
+
+$\int sin x cos x dx$
+
+### Solution
+
+Using Integration by parts to solve this problem 
+
+$\int f(x) g'(x) dx = f(x) g(x) - \int f'(x) g(x) dx$
+
+Let $f(x)$ = sin $x$ and $g'(x)$ = cos $x$
+
+For which, $f'(x)$ = cos $x$ and $g(x)$ = sin $x$
+
+Substituting in the formula for Integration by Parts,
+
+$\int$ sin $x$ cos $x$ $dx$ = sin $x$ sin $x$  - $\int$ cos $x$ sin $x$ $dx$
+
+
+which equals 
+ 2 $\int$ sin $x$ cos $x$ $dx$ = sin $x$ sin $x$
+ 
+which equals
+
+   $\int$ sin $x$ cos $x$ $dx$  = $1/2$ $sin^2 x + C$
+where $C$ is a constant
+
+
+
+*******
+
+
+### Problem Set 4. Use integration by parts to solve for
+
+$\int x^2 e^xdx$
+
+### Solution
+
+From $\int x^2 e^xdx$
+
+Let $f(x)$ = $x^2$ and $g'(x)$ = $e^x$
+
+For which, $f'(x)$ = $2x$ and $g(x)$ = $e^x$
+
+Substituting in the formula for Integration by Parts,
+
+main equation as 
+$\int x^2$ $e^x$ $dx$ = $x^2$ $e^x$ - $\int 2x$ $e^x$ $dx$
+
+
+
+
+Applying the Integration by parts to second part of $\int 2x$ $e^x$ $dx$ with
+
+f(x)$ = $x$ and $g'(x)$ = $e^x$
+
+for which, $f'(x)$ = $1$ and $g(x)$ = $e^x$
+
+Hence, $\int 2x$ $e^x$ $dx$ =  2 $\int x$ $e^x$ $dx$ =  2( $x$ $e^x$ - $\int$ 1$e^x$ $dx$)
+
+which equals 2$x$$e^x$ - 2$e^x$
+
+
+
+Substituting this resolved second part in main equation,
+
+$\int x^2$ $e^x$ $dx$ = $x^2$ $e^x$ - (2$x$$e^x$ - 2$e^x$) = $e^x$ $(x^2 - 2x + 2)$
+
+
+Therefore
+
+$\int x^2$ $e^x$ $dx$ = $e^x$ $(x^2 - 2x + 2)$ + $C$
+where $C$ is a constant
+
+
+*******
+
+
+### Problem Set 5. What is $\frac{d}{dx}$ $(x$ cos$x)$ ?
+
+### Solution
+
+We can apply the product rule here,
+
+$(f(x)$ $g(x))'$ = $f'(x)g(x) + f(x) g'(x)$
+
+Hence, $\frac{d}{dx}$ $(x$ cos$x)$ with $f(x)$ = $x$ and $g(x)$ = cos$x$
+$f'(x)$ = 1 and $g'(x)$ = -sin$x$
+
+
+We have, 
+ $\frac{d}{dx}$ $(x$ cos$x)$ = $1$ cos$x$ + $x$(- sin$x$)
+ 
+ which equals 
+ cos$x$ - $x$ sin$x$
+ 
+ 
+*******
+ 
+
+### Problem Set 6. What is $\frac{d}{dx}$ ${ e }^{ { x }^{ 4 } }$ ?
+
+### Solution
+
+The function $\frac{d}{dx}$ ${ e }^{ { x }^{ 4 } }$ shows a Chain rule where
+
+$f(g(x))$ = $f'(g(x))$ $g'(x)$
+
+
+$g(x) = x^4$ and now we have $g'(x)$ = $4x^3$
+
+Lets call $f(g(x))$ as $f(y)$
+
+where$y = x^4$
+
+So, $f(y)$ = $e^y$ and $f'(y)$ = $e^y$
+
+
+
+Applying Chain rule,
+
+ $\frac{d}{dx}$ ${ e }^{ { x }^{ 4 } }$ = ${ e }^{ { x }^{ 4 } }$ $4x^3$
+
+which equals $4x^3$${ e }^{ { x }^{ 4 } }$
+
+
+*******
+
+
