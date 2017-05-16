@@ -1,0 +1,138 @@
+---
+title: "605_HW14.Rmd"
+author: "Kumudini Bhave"
+date: "May 12, 2017"
+output:
+  pdf_document: default
+  html_document:
+    fontsize: 35pt
+    highlight: pygments
+    theme: cerulean
+---
+
+*****
+
+
+# **TAYLOR SERIES **
+
+
+### Problem Set 1 : 
+
+### work out some Taylor Series expansions of popular functions.
+$$f\left( x \right) = \frac { 1 }{ (1-x) } $$
+$$f\left( x \right) \quad =\quad { e }^{ x }$$
+$$f\left( x \right) \quad =\quad \ln { (1\quad +\quad x) } $$
+
+### For each function, only consider its valid ranges as indicated in the notes when you are computing the Taylor Series expansion.
+
+
+### Solution :
+
+Taylor Series Approximation is used to represent functions as an
+infinite sum of polynomial terms that are calculated using a function's derivatives evaluated
+at a single point.
+
+Taylor's Theorem states that any function that is infinitely differentiable can be repre-
+sented as a polynomial of the following form of 
+
+
+$$f\left( x \right) \quad =\quad \sum _{ n=0 }^{ \infty  }{ \frac { { f }^{ (n) }(a) }{ n! } { (x-a) }^{ n } }$$
+
+which equals ,
+
+
+$$f(a)\quad +{ \quad f }^{ (1) }(a)(x-a)\quad +\quad \frac { { f }^{ (2) } }{ 2! } (a)(x-a)\quad +\quad ...$$
+
+where $f^{ (n)(a) }$ represents the nth derivative of $f(x)$ evaluated at $x = a$. 
+
+
+*******
+
+
+For $$f\left( x \right) = \frac { 1 }{ (1-x) } $$
+
+Derivatives are,
+
+${ f }(x)\quad =\quad { (1-x) }^{ -1 }\quad ;\quad { f }(0)\quad =\quad 1$
+
+${ f }^{ (1) }(x)\quad =\quad 1{ (1-x) }^{ -2 }\quad ;\quad { f }^{ (1) }(0)\quad =\quad 1$
+
+${ f }^{ (2) }(x)\quad =\quad (-2){ (1-x) }^{ -3 }\quad ;\quad { f }^{ (2) }(0)\quad =\quad 2$
+
+${ f }^{ (3) }(x)\quad =\quad (3*2){ (1-x) }^{ -4 }\quad ;\quad { f }^{ (3) }(0)\quad =\quad (3*2)$
+
+${ f }^{ (4) }(x)\quad =\quad -(4*3*2){ (1-x) }^{ -5 }\quad ;\quad { f }^{ (4) }(0)\quad =\quad (4*3*2)$
+
+
+
+Therefore, plugging in Taylor Theorem Polynomial,
+
+$$= 1\quad +\quad x\quad +\quad { x }^{ 2 }\quad +\quad { x }^{ 3 }\quad +\quad { x }^{ 4 }\quad +\quad ..$$
+
+which reduces to
+
+
+$$\sum _{ n=0 }^{ \infty  }{ { x }^{ n } }  $$
+
+
+*******
+
+
+For $$f\left( x \right) \quad =\quad { e }^{ x }$$
+
+Derivatives for function,
+
+$f(x)\quad =\quad { e }^{ x }\quad ;\quad f(0)\quad =\quad 1$
+
+${ f }^{ (1) }(x)\quad =\quad { e }^{ x }\quad ;\quad { f }^{ (1) }(0)\quad =\quad 1$
+
+${ f }^{ (2) }(x)\quad =\quad { e }^{ x }\quad ;\quad { f }^{ (2) }(0)\quad =\quad 1$
+
+${ f }^{ (3) }(x)\quad =\quad { e }^{ x }\quad ;\quad { f }^{ (3) }(0)\quad =\quad 1$
+
+${ f }^{ (4) }(x)\quad =\quad { e }^{ x }\quad ;\quad { f }^{ (4) }(0)\quad =\quad 1$
+
+Plugging in Taylor theorem polynomial,
+
+Therefore, 
+
+$$= 1\quad +\quad x\quad +\quad \frac { 1 }{ 2! } { x }^{ 2 }+\frac { 1 }{ 3! } { x }^{ 3 }+\frac { 1 }{ 4! } { x }^{ 4 }+\frac { 1 }{ 5! } { x }^{ 5 }...$$
+
+=
+$$= \sum _{ n=0 }^{ \infty  }{ \frac { { x }^{ n } }{ n! }  } $$
+
+
+*******
+
+
+
+For,  $$f\left( x \right) \quad =\quad \ln { (1\quad +\quad x) } $$
+
+
+Calculating derivatives of the functions, we have,
+
+$f(x)\quad =\quad ln(1\quad +\quad x);\quad f(0)\quad =\quad 0$
+
+${ f }^{ (1) }(x)\quad =\quad { (1+x) }^{ -1 };\quad { f }^{ (1) }(0)\quad =\quad 1$
+
+${ f }^{ (2) }(x)\quad =\quad -1{ (1+x) }^{ -2 };\quad { f }^{ (2) }(0)\quad =\quad -1$
+
+${ f }^{ (3) }(x)\quad =\quad 2{ (1+x) }^{ -3 };\quad { f }^{ (3) }(0)\quad =\quad 2$
+
+${ f }^{ (4) }(x)\quad =\quad -(3\quad *\quad 2){ (1+x) }^{ -4 };\quad { f }^{ (4) }(0)\quad =\quad -(3\quad *\quad 2)$
+
+${ f }^{ (5) }(x)\quad =\quad (4\quad *\quad 3\quad *\quad 2){ (1+x) }^{ -5 };\quad { f }^{ (5) }(0)\quad =\quad (4\quad *\quad 3\quad *\quad 2)$
+
+
+Plugging in Taylor theorem polynomial, 
+$$0+x-\frac { 1 }{ 2 } { x }^{ 2 }+\frac { 1 }{ 3 } { x }^{ 3 }-\frac { 1 }{ 4 } { x }^{ 4 }+\frac { 1 }{ 5 } { x }^{ 5 }-\frac { 1 }{ 6 } { x }^{ 6 }+....$$
+
+equals,
+
+$$=\sum _{ n=0 }^{ \infty  }{ { (-1) }^{ n+1 }\frac { { x }^{ n } }{ n }  } $$
+
+
+
+********
+
+
