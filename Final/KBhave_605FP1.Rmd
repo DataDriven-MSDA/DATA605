@@ -1,0 +1,698 @@
+---
+title: "KBhave_605FP1"
+author: "Kumudini Bhave"
+date: "May 20, 2017"
+output:
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    fontsize: 35pt
+    highlight: pygments
+    theme: cerulean
+    toc: yes
+---
+
+
+
+
+\newpage
+
+# **Regression Model : Predicting Sales For City Housing Data**
+
+
+********
+
+## Summary
+
+
+This is an R Markdown document for providing documentation for performing **Regression** by practising **Data Exploration, Transformation, Analysis, Modelling and Prediction Of the Housing DataSet**
+
+
+In the process, we will explore Probability, Descriptive and Inferential Statistics, Linear Algebra and Correlation, Calculus based Probability & Statistics, and Modeling. 
+
+For this exploration we will use the **Housing** data set from "The House Prices: Advanced Regression Techniques Competition" on Kaggle.com, see link below.![Kaggle]
+(https://www.kaggle.com/c/house-prices-advanced-regression-techniques)
+
+
+
+
+## Housing DataSet
+
+The Housing dataset of a major city depicts 1460 observations across 81 variables.
+The description of these can be found here at ![data_description.txt] (https://raw.githubusercontent.com/DataDriven-MSDA/DATA605/master/Final/data_description.txt
+)
+
+
+
+```{r warning=FALSE, comment=FALSE, message=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=200)}
+knitr::opts_chunk$set(message = FALSE, echo=TRUE)
+
+
+# Library for loading CSV data
+library(RCurl)
+
+# Library for data display in tabular format
+
+library(DT)
+library(dplyr)
+# Library for plotting
+library(ggplot2)
+library(gridExtra)
+# Statistical Packages
+library(corrplot)
+library(e1071)
+library(data.table)
+library(knitr)
+library(caret)
+library(pander)
+library(car)
+#library(bestglm)
+library(MASS)
+library(Amelia)
+library(leaps)
+```
+
+
+\newpage
+
+## Data Exploration
+
+We load the data pertaining to this competition, and study the same.
+
+Let us performed some basic exploration of the data. This **Housing data set** has **81 variables** and **1460 observations**. Based on the descriptions of the various variables (see data set text documentation), we may conclude that the dependent variable is the SalePrice. The remaining variables are both qualitative or quantitative in nature.
+
+
+
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+# Getting data 
+
+trdata.giturl <- "https://raw.githubusercontent.com/DataDriven-MSDA/DATA605/master/Final/train.csv"
+
+evaldata.giturl <- "https://raw.githubusercontent.com/DataDriven-MSDA/DATA605/master/Final/test.csv"
+
+
+#Remove the Index Column/variable
+traindataorig<-read.csv(url(trdata.giturl))
+traindataorig <- dplyr::select(traindataorig, -1)
+traindata <- traindataorig
+
+evaldataorig<-read.csv(url(evaldata.giturl))
+#evaldataorig <- dplyr::select(evaldataorig, -1)
+evaldata <- dplyr::select(evaldataorig, -1)
+
+
+nrow(traindata)
+ncol(traindata)
+#View(traindata)
+#View(evaldata)
+```
+
+**The summary of the Housing data**
+
+Out of the 80 variables(after removing the Index), we have one response/ dependant variable **SalePrice**. While 79 others are predictor variables.
+Below is the summary for all the variables in the dataset
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+pander(summary(traindata[,seq(1, 25)]))
+pander(summary(traindata[,seq(26, 50)]))
+pander(summary(traindata[,seq(51, 80)]))
+
+```
+
+
+
+
+**Variables For Study**
+
+
+For the purpose of study we select the predictor variable as *GrLivArea* , as the quantitative Predictor Variable that impacts the Response variable *SalePrice* . The response as well as predictor are continuous variables.
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+#datatable(head(traindata,100), options = list(
+#  searching = FALSE,
+#  pageLength = 5,
+#  lengthMenu = c(5, 10, 15, 20)
+#))
+
+#data.table(head(traindata,100),width = 300)
+
+# setting Y variable and select X variable
+Y <- traindata$SalePrice
+X <- traindata$GrLivArea
+
+```
+
+
+\newpage
+
+
+## Probability
+
+Lets define the $x$ as 4th quartile (lower bound) of the Predictor Variable of $X$ ie **GrLivArea**
+and the $y$  as 2nd quartile of the response variable $Y$ ie **SalePrice**
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+x <- quantile(X, 0.75)
+x
+
+y <- quantile(Y, 0.50)
+y
+
+```
+ 
+
+
+**(a)** 
+
+$$P(X>x|Y>y)=\frac { P(X>x\cap Y>y) }{ P(Y>y) } $$
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+
+p_XnY <- filter(traindata, SalePrice > y & GrLivArea > x) %>% tally()/nrow(traindata)
+
+p_Y <- filter(traindata, SalePrice > y) %>% tally()/nrow(traindata)
+
+pa <- (p_XnY/p_Y)
+pa
+```
+
+ 43.27% likely that its living area is above the 75th percentile, when it is given that house's sale price is greater than the median house price
+ 
+ 
+ 
+**(b)**
+
+$$P(X>x, Y>y) = P(X > x \ \cap \ Y > y)$$
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+
+p_XnYonly <- filter(traindata, SalePrice > y & GrLivArea > x) %>% tally()/nrow(traindata)
+
+pb <- p_XnYonly
+pb
+
+```
+
+21.58% likely that the living area is above the 75th percentile and the sale price is above the median.
+
+
+
+**(c)** 
+
+$$P(X<x | Y>y) = \frac{P(X < x \ \cap \ Y > y)}{P(Y > y)}$$
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+
+p_XY <- filter(traindata, SalePrice > y & GrLivArea < x) %>% tally()/nrow(traindata)
+p_Y <- filter(traindata, SalePrice > y) %>% tally()/nrow(traindata)
+
+pc <- (p_XY / p_Y)
+pc
+```
+
+
+ 56.73% likeliness that house's living area is below the 75th percentile
+
+
+\newpage
+
+
+## Independance 
+
+
+We have,
+			
+x/y | below 2nd Qtr  | above 2nd Qtr | Total
+--- | -------------- | ------------- | -------
+below 3rd Qtr | 682 | 413 | 1095 
+above 3rd Qtr | 50 | 315 | 365 
+Total | 732 | 728 | 1460
+
+Let X = observations above the 3d quartile for X, 
+Let Y = observations above the 2d quartile for Y.
+
+Checking for $$ P(X|Y)=P(X)P(Y)$$
+
+$P(X)=$365/1460=0.25 ,  
+$P(Y)=$728/1460=0.4986301
+
+Hence,
+
+ $P(X).P(Y)$= 0.25 * 0.4986301 = 0.1246575
+ $P(X|Y)$ = 0.4327
+
+Since $P(X|Y)\quad \neq \quad P(X)P(Y)$, the variables X and Y are not independent.
+
+
+**Verifying with Chi-Square Test**
+
+Let ${ H }_{ 0 }$: X and Y are independent
+Let ${ H }_{ A }$: X and Y are not independent
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+ctab <- table(traindata$GrLivArea > x, traindata$SalePrice > y)
+chitest <- chisq.test(ctab, correct=TRUE)
+
+chitest
+
+```
+
+
+
+Results of Chi-Square test:
+
+The result of the Chi-Square test indicates that the p value is extremely small and much less than  0.05, hence we reject the ${ H }_{ 0 }$ hypothesis.
+
+
+\newpage
+
+## Descriptive and Inferential Statistics
+
+
+Summary statistics for Predictor **GrLivArea** $X$ and Response Variable **SalePrice** $Y$ are provided in the table below:
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+# prepare summary table supplemented with standard deviation
+
+
+sumXY <- rbind(c(summary(X) ), c(summary(Y)))
+sdXY <- rbind(round(sd(X),0), round(sd(Y),0))
+
+
+sumXYtab <-cbind(sumXY, sdXY)
+row.names(sumXYtab) <- c('X (GrLicArea)', 'Y (SalePrice)')
+
+
+pander(sumXYtab)
+
+```
+
+
+**Plot Y Vs X : SalePrice Vs Grade Living Area**
+
+
+It is intuitive that with an increase in the Living Area , the price of the house would increase. We expect a linear relationship between GrLivArea and SalePrice. We see the same in the plot.
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+
+ ggplot(traindata, aes(x=GrLivArea,y= SalePrice / 1000)) + 
+  geom_point(alpha = 0.25, col = "red") +
+  scale_x_continuous('Grade Living Area [square feet]') + 
+  scale_y_continuous('Sale Price in $[thousands]')
+
+```
+
+
+**Plot Histogram: SalePrice and Histogram : Living Area**
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+
+hist.SalePrice <- ggplot(traindata, aes(x=SalePrice)) + geom_histogram() + ggtitle("Histogram : Response Variable :  SalePrice")
+
+hist.GrLivArea <- ggplot(traindata, aes(x=GrLivArea)) + geom_histogram() + ggtitle("Histogram : Predictor Variable :  GrLivArea")
+
+par(mfrow=c(1,2))
+hist.SalePrice
+hist.GrLivArea
+
+
+```
+
+
+We find that for both , the response variable **SalePrice** as well as the predictor variable **GrLivArea** , the distributions are strongly right skewed. Both the distributions are crudely normal.
+
+
+
+
+### BOXCOX Transformation
+
+We will perform BoxCox Transformation and explore the correlation between the Response variable and Predictor variable.
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+
+library(forecast)
+
+lambda.SalePrice <- BoxCox.lambda(traindata$SalePrice) # Indicates Using As Is , Y^1
+
+lambda.GrLivArea <- BoxCox.lambda(traindata$GrLivArea) # Indicates Using as Is , X^1
+
+```
+
+
+The lambda value for SalePrice and GrLivArea both equal 1 , suggesting transformation of $Y^{ 1 }$ for SalePrice and $X^{ 1 }$ for GrLivArea, which essentially means no transformation
+
+
+### Correlation Matrix
+
+To check out the correlation among the predictor variables and the response variables and also for any multicollinearity, we plot the pairs plot.
+
+**Numerical Variables **
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+cortrain <- dplyr::select(traindata, LotArea, TotalBsmtSF, BsmtFinSF1,X1stFlrSF, GrLivArea, GarageArea, PoolArea,  SalePrice)
+
+cormat<-as.matrix(cor(cortrain, use = "pairwise.complete.obs"))
+corrplot(cormat,  method="color", tl.cex=0.7, addCoef.col = "black", addCoefasPercent = TRUE)
+
+
+```
+
+
+We find that the predictor variable **GrLivArea** is highly correlated to the **SalePrice** at a correlation value of 71%.
+We also observe other predictors which seem to be significantly correlated viz. TotalBsmtSF, X1stFlrSF, GarageArea. We may further analyze thier significane during modeling.
+
+
+**Verifying with Confidence Interval Test**
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+t.test(traindata$GrLivArea, traindata$SalePrice) 
+t.test(traindata$GrLivArea, traindata$SalePrice)$conf.int
+
+```
+
+A **95% confidence** interval for the difference in the means of $X$ and $Y$ is given by **[-183484.2, -175327.3]**
+The p-value associated with this hypothesis test is near-zero, so the null hypothesis that there is no correlation between the variables is rejected.
+
+Let ${ H }_{ 0 }$: Variable X and Y are not correlated
+Let ${ H }_{ A }$: Variable X and Y are correlated
+
+To check programmatically for correlation :
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+cortest <- cor.test(X, Y, method = "pearson" , conf.level = 0.99)
+
+
+```
+
+A 99% confidence interval for the difference in the means of $X$ and $Y$ is given by [0.6733974, 0.7406408]
+
+The p-value associated with this hypothesis test is almost zero, so the null hypothesis that ${ H }_{ 0 }$: Variable X and Y are not correlated is rejected.
+Therefore, it can be said with **99% Confidence** that there exists a correlation between the GrLivArea and SalePrice and the correlation value lies in between **[0.6733974, 0.7406408]**
+Also from the plot we see that the correlation of 0.71 exists between GrLivArea and SalePrice
+
+
+\newpage
+
+
+
+## Linear Algebra And Correlation
+
+Lets invert the correlation matrix, to get the Precision Matrix, which contains the Variance Inflation Factors across the diagonal.
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+corrtraindata <- dplyr::select(traindata, GrLivArea, SalePrice)
+
+# Deriving Correlation MAtrix
+
+cormatrix <- cor(corrtraindata)
+pander(cormatrix)
+
+# Inverting Correlation Matrix to get Precision Matrix.
+precimatrix <- solve(cormatrix)
+pander(precimatrix)
+
+
+```
+
+
+Multiplying Correlation Matrix by Precision Matrix,  we expect an Identity Matrix
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+multi_cor_preci <- cormatrix %*% precimatrix
+pander(multi_cor_preci) # We get Identity matrix
+
+
+```
+
+
+
+
+Multiplying Precision Matrix by Correlation Matrix, we expect an Identity Matrix
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+multi_preci_cor <-  precimatrix %*% cormatrix
+pander(multi_preci_cor) # We get Identity matrix
+
+
+```
+
+
+\newpage
+
+
+
+## Calculus Based Probability And Statistics
+
+For the independant variable, GrLivArea, we have the minimum value at `r min(traindata$GrLivArea)`.
+
+The minimum value is above zero. Hence we do not need to add/shift the values above zero.
+We take an exponential density function to fit.
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+# Finding lambda value  y fitting GrLivArea to exponential distribution 
+
+expoGrLivArea <- fitdistr(traindata$GrLivArea, 'exponential')
+lambda <- expoGrLivArea$estimate[[1]]
+
+
+```
+
+The $\lambda = `r round(lambda, 7)`$ is the value obtained  , which is the optimal value of parameter for this distribution.
+We take a thousand samples from this distribution. We will compare these values with the original non-transformed values.
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+# Taking 1000 samples of the exponential distribution for GrLivArea
+
+set.seed(100)
+GrLivArea.samples.1000 <- rexp(1000, lambda)
+
+dfGrLivArea <- data.frame(GrLivArea.samples.1000)
+
+
+hist.GrLivArea.exp1000 <- ggplot(data.frame(dfGrLivArea), aes(dfGrLivArea)) + 
+  geom_histogram() +  ggtitle('Histogram : Predictor Variable :  Exponential GrLivArea Simulated Data')
+
+par(mfrow=c(1,2))
+
+hist.GrLivArea
+hist.GrLivArea.exp1000
+
+mean(GrLivArea.samples.1000)
+
+
+```
+
+Comparing the two histograms , for the original GrLivArea and the Sampled Exponential GrLivArea, we find :
+1. The original distribution was appeared crudely normal with very strong skewnees to the right.
+ It was centred with highest frequency and mean around 1515.
+2. The simulation of transformed GrLivArea is centred more closer toward 0. Also it is more skewed to the right as compared to the original predictor data.
+
+
+\newpage
+
+
+## Modeling
+
+Before we go ahead and build a model, we would need to cleanse the data.
+From the following missing values map, we find that MasVnrArea,  BsmtFinType1, BsmtFinType2 have less number of NAs while  GarageType(81 NAs),GarageYrBlt (81 NAs), GarageQual (81 NAs), GarageCond (81 NAs)
+
+Functional has high number of missing values , 1360.Similarly, PoolQC	Fence, Alley,FireplaceQu	MiscFeature also have high values and are categorical. Since it categorical and also does not appear to be very important one , due to large number of NAs, lets compute our model without considering this.
+
+
+For other numerical variables , we can safely remove these observations for modeling sake, as the amount of traindata is large enough or the study.
+
+So after removing the categorical predictos with high NA values viz. Functional,PoolQC,Fence,MiscFeature, Alley,FireplaceQu,
+we will proceed with complete cases for building our model.
+
+
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+missmap(traindata, legend = TRUE, main = "Missing Values vs Observed", col =  c("red", "black"))
+
+traindatamodel <- dplyr::select(traindata, -Functional,-PoolQC,-Fence,-MiscFeature, -Alley,-FireplaceQu)
+
+#Verifying that no NAs are present
+missmap(traindatamodel, legend = TRUE, main = "Missing Values vs Observed After Data Cleanse", col =  c("red", "black"))
+
+traindatamodel <- data.frame(traindatamodel[complete.cases(traindatamodel), ])
+nrow(traindatamodel)
+ncol(traindatamodel)
+
+```
+
+
+We now have 1094 observations in our dataset. Since our evaluation data does not have the SalePrice, we go ahead for splitting our training data so as to crossvalidate the models constructed. We verify model with splitting the train data into 80:20 ratio by randomly selecting the observation data for further analysis of models (since evaluation data lacks the target response variable)
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=80)}
+
+
+
+set.seed(100)
+randomobs <- sample(seq_len(nrow(traindatamodel)), size = floor(0.8 * nrow(traindatamodel)))
+
+trainnew <- traindatamodel[randomobs,]
+testnew <- traindatamodel[-randomobs,]
+
+#View(traindatamodel)
+```
+
+
+
+### Model 1 : Random Forest Model
+
+We start with considering the numeric variables since those are found to be more significant.
+We will apply this to the training dataset and then crossvalidate with the test.
+
+The "caret" package train function is used with method of "random forest"" .
+A 5 fold cross validation is used.
+From the summary we see that for 19 mtry (number of variables used ), we get the least Root Mean Squared Error value of 31583.31
+
+From the plot of the fit, we observe how the RMSE decreases as the predictors increase , however RMSE is lowest at 19 predictors and then increases back.
+
+The top 19 predictor variables that give the best performance (least RMSE value) are plotted in the Variable Importance Plot below.
+
+We also see this by crossvalidating against the testdata which was partitionaed from the main training dataset , RMSE as 32369.93
+
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+numetrain <- names(trainnew)[which(sapply(trainnew, is.numeric))]
+traindatamodel.n <- trainnew[numetrain]
+
+
+
+numetest <- names(testnew)[which(sapply(testnew, is.numeric))]
+testdatamodel.n <- testnew[numetest]
+
+# Imputing numeric missing values with 0
+testdatamodel.n[is.na(testdatamodel.n)] <- 0
+
+
+# Random Forest model
+
+modelrf <- train(SalePrice ~., data=traindatamodel.n, method="rf", trControl=trainControl(method="cv",number=5), prox=TRUE, importance = TRUE, allowParallel=TRUE)
+
+# show the model summary          
+summary(modelrf)
+print(modelrf)
+
+# Crossvalidating for test model
+predtest <- predict(modelrf, testdatamodel.n)
+
+# Finding Error MSE
+model1.mse <- mean((testdatamodel.n$SalePrice - predtest)^2, na.rm = TRUE)
+model1.mse
+model1.rmse <- sqrt(model1.mse)
+model1.rmse
+
+RMSE <- sqrt(sum((predtest - testdatamodel.n$SalePrice)^2)/length(predtest))
+
+
+plot(modelrf, main = "Error rate of random forest")
+
+
+
+## variable importance
+
+rfImp <- varImp(modelrf)
+rfImp
+plot(rfImp,top = 20,  main = "Importance of Variables")
+
+
+```
+
+The variable importance plot is a critical output of the random forest algorith. For each variable in your matrix it tells you how important that variable is in classifying the data. The plot shows each variable on the y-axis, and their importance on the x-axis. They are ordered top-to-bottom as most- to least-important.
+We see that **OverallQual**, **GrLivArea**, have the highest importance and impacts the SalePrice of the house. Followed by **YearBuilt**, **OverallCond,**, **X2ndFlrSF**, **FullBath** and others.
+
+
+
+**********
+
+
+### Predictions on Evaluation Data
+
+We now use this Model for predicting the housing sale price evaluation dataset. 
+
+For submitting to Kaggle , we will apply the model to entire original evaluation dataset.
+
+
+```{r tidy=TRUE, tidy.opts=list(width.cutoff=150)}
+
+
+# Obtaining the numeric variables form the evaluation dataset
+numeric_var <- names(evaldataorig)[which(sapply(evaldataorig, is.numeric))]
+evaldataorig.n <- evaldataorig[numeric_var]
+
+# Imputing missing values with 0
+evaldataorig.n[is.na(evaldataorig.n)] <- 0
+
+
+# Applying the model for predicting SalePrice              
+predeval <- predict(modelrf, evaldataorig.n)
+
+evalDF <- as.data.frame(cbind(evaldataorig$Id, predeval))
+colnames(evalDF) <- c("Id", "SalePrice")
+dim(evalDF) #  1459 rows for Kaggle submission
+
+#Submitted to Kaggle
+write.csv(evalDF, file = "predictedSP_RF.csv", quote=FALSE, row.names=FALSE)
+
+
+# adding to evaluation data set
+evaldataorig$SalePrice <-predeval
+
+# Updated EvaluationCSV with predictions from model
+write.csv(evaldataorig, 'predicted_SalePrice.csv', row.names = FALSE)
+
+
+```
+
+
+
+**********
+
+Kaggle UserName : kbhave
+
+
+![Kaggle Housing Score](https://raw.githubusercontent.com/DataDriven-MSDA/DATA605/master/Final/KaggleHousing.JPG)
+
+**********
